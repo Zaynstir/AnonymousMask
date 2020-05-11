@@ -52,15 +52,18 @@ public class Anonymous extends JavaPlugin implements Listener{
 				return true;
 			}
 			Player p = (Player) sender;
-			if(p.getInventory().firstEmpty() == -1) {
-				p.sendMessage(ChatColor.DARK_RED + "Please empty an inventory slot");
-				return true;
+			if(p.hasPermission("mask.use")) {
+				if(p.getInventory().firstEmpty() == -1) {
+					p.sendMessage(ChatColor.DARK_RED + "Please empty an inventory slot");
+					return true;
+				}
+				else {
+					p.getInventory().addItem(getMask());
+					p.sendMessage(ChatColor.YELLOW + "You have recieved the Anonymous Mask.");
+					return true;
+				}
 			}
-			else {
-				p.getInventory().addItem(getMask());
-				p.sendMessage(ChatColor.YELLOW + "You have recieved the Anonymous Mask.");
-				return true;
-			}
+			
 		}
 		return false;
 	}
