@@ -24,11 +24,13 @@ import org.bukkit.scoreboard.Team;
 public class Anonymous extends JavaPlugin implements Listener{
 
     Team team = null;
+    List<SaveTeam> hiddenPlayers = new ArrayList<SaveTeam>();
 
     @Override
     public void onEnable() {
         this.getServer().getPluginManager().registerEvents(this, this);
         createTeam();
+
     }
 
     @Override
@@ -91,6 +93,13 @@ public class Anonymous extends JavaPlugin implements Listener{
                     if(e.getCurrentItem().getItemMeta().hasLore()) {
                         Player p = (Player) e.getWhoClicked();
                         team.removeEntry(p.getName());
+                        for(int i = 0; i < hiddenPlayers.size(); i++){
+                            if(hiddenPlayers.get(i).getCurrentPlayer() == p){
+                                hiddenPlayers.get(i).getCurrentTeam().addEntry(p.getDisplayName());
+                                hiddenPlayers.remove(i);
+                                break;
+                            }
+                        }
                         p.sendMessage(ChatColor.YELLOW + "Your nametag is now visible.");
                     }
                 }
@@ -111,6 +120,8 @@ public class Anonymous extends JavaPlugin implements Listener{
                     else {
                         p.getInventory().removeItem(getMask());
                         p.getInventory().setHelmet(getMask());
+                        //p.sendMessage("" + p.getScoreboard().getEntryTeam(p.getDisplayName()));
+                        hiddenPlayers.add(new SaveTeam(p, p.getScoreboard().getEntryTeam(p.getDisplayName())));
                         team.addEntry(p.getName());
                         p.sendMessage(ChatColor.GREEN + "Your nametag is now invisible.");
                     }
