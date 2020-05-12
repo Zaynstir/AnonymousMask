@@ -16,3 +16,4 @@ This plugin is fairly simple. You type /mask to recieve a mask. Then you right c
 - Allow for a bit more configuration
 - A way to add and remove people from team 'hidden' through commands like mask addPlayer/removePlayer
 - Update mask list to display player display name if possible
+- the ability to change what block goes on the head
