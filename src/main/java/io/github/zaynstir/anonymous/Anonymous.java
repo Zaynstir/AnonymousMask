@@ -55,6 +55,16 @@ public class Anonymous extends JavaPlugin implements Listener{
             }
             Player p = (Player) sender;
             if(p.hasPermission("mask.use")) {
+                if(args.length == 1){
+                    if(args[0].equalsIgnoreCase("list")){
+                        String str = "";
+                        for(int i = 0; i < hiddenPlayers.size(); i++){
+                            str += hiddenPlayers.get(i).getCurrentPlayer().getDisplayName() + (i == hiddenPlayers.size()-1 ? "" : ", ");
+                        }
+                        p.sendMessage(str);
+                        return true;
+                    }
+                }
                 if(p.getInventory().firstEmpty() == -1) {
                     p.sendMessage(ChatColor.DARK_RED + "Please empty an inventory slot");
                     return true;
