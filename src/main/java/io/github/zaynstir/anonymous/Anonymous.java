@@ -1,7 +1,18 @@
 package io.github.zaynstir.anonymous;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
+
+import org.bukkit.OfflinePlayer;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -25,17 +36,70 @@ public class Anonymous extends JavaPlugin implements Listener{
 
     Team team = null;
     List<SaveTeam> hiddenPlayers = new ArrayList<SaveTeam>();
+    public String pluginFolder = getDataFolder().getAbsolutePath();
 
     @Override
     public void onEnable() {
         this.getServer().getPluginManager().registerEvents(this, this);
         createTeam();
-
+        readJSON("hiddenPlayersList", "", "");
     }
 
     @Override
     public void onDisable() {
+        writeJSON("hiddenPlayersList", "");
+    }
 
+    public void writeJSON(String fileName, String subPath) {
+        JSONObject main = new JSONObject();
+
+        for(int i = 0; i < hiddenPlayers.size(); i++){
+            main.put((hiddenPlayers.get(i).getCurrentPlayer().toString()),(hiddenPlayers.get(i).getCurrentTeam() == null ? null : hiddenPlayers.get(i).getCurrentTeam().getName()));
+        }
+
+        try {
+            File file = new File(pluginFolder + File.separator + subPath + fileName + ".json");
+            File filePath = new File(pluginFolder + File.separator + subPath);
+            filePath.mkdirs();
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(main.toString());
+            fileWriter.flush();
+            fileWriter.close();
+            getLogger().info("SUCCESS: on write file hiddenPlayersList.json for Plugin: Anonymous");
+        } catch (Exception e) {
+            getLogger().info("ERROR: on write file hiddenPlayersList.json for Plugin: Anonymous");}
+    }
+
+    public void readJSON(String fileName, String subPath, String object) {
+        String var = null;
+        try {
+            JSONParser parser = new JSONParser();
+
+            File file = new File(pluginFolder + File.separator + subPath + fileName + ".json");
+            Object obj = parser.parse(new FileReader(file));
+
+            JSONObject jsonObject = (JSONObject) obj;
+            Scoreboard s = Bukkit.getScoreboardManager().getMainScoreboard();
+
+            //var = (String) jsonObject.get(object);
+
+            for(Iterator iterator = jsonObject.keySet().iterator(); iterator.hasNext();){
+                String key = (String) iterator.next();
+                try{
+                    hiddenPlayers.add(new SaveTeam(UUID.fromString(key), (s.getTeam(jsonObject.get(key).toString()) == null ? null : s.getTeam(jsonObject.get(key).toString()))));
+                }catch(Exception e){
+                    getLogger().info("Adding Failed");
+                }
+
+            }
+            getLogger().info("SUCCESS: on read file hiddenPlayersList.json for Plugin: Anonymous");
+        } catch (Exception e) {
+            getLogger().info("ERROR: on read file hiddenPlayersList.json for Plugin: Anonymous");
+        }
+        //return var;
     }
 
     public void createTeam() {
@@ -45,6 +109,11 @@ public class Anonymous extends JavaPlugin implements Listener{
             team = scoreboard.registerNewTeam("hidden");
         }
         team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
+
+        /*Team t = scoreboard.getTeam("testTeam");
+        if(t == null) {
+            t = scoreboard.registerNewTeam("testTeam");
+        }*/
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -58,21 +127,30 @@ public class Anonymous extends JavaPlugin implements Listener{
                 if(args.length == 1){
                     if(args[0].equalsIgnoreCase("list")){
                         String str = "";
+                        p.sendMessage("The Hidden: ");
+                        p.sendMessage("----------------------");
                         for(int i = 0; i < hiddenPlayers.size(); i++){
-                            str += hiddenPlayers.get(i).getCurrentPlayer().getDisplayName() + (i == hiddenPlayers.size()-1 ? "" : ", ");
+                            try{
+                                p.sendMessage((hiddenPlayers.get(i).getCurrentPlayer() == null ? "null" : hiddenPlayers.get(i).getCurrentPlayer().toString()) + " - " + (hiddenPlayers.get(i).getCurrentTeam().getName() == null ? "null" : hiddenPlayers.get(i).getCurrentTeam().getName()));
+                             }catch (Exception e){
+                                p.sendMessage("There was an error recieving the list");
+                                getLogger().info("Anonymous Mask List Error");
+                            }
                         }
-                        p.sendMessage(str);
+                        p.sendMessage("----------------------");
                         return true;
                     }
                 }
-                if(p.getInventory().firstEmpty() == -1) {
-                    p.sendMessage(ChatColor.DARK_RED + "Please empty an inventory slot");
-                    return true;
-                }
-                else {
-                    p.getInventory().addItem(getMask());
-                    p.sendMessage(ChatColor.YELLOW + "You have recieved the Anonymous Mask.");
-                    return true;
+                else{
+                    if(p.getInventory().firstEmpty() == -1) {
+                        p.sendMessage(ChatColor.DARK_RED + "Please empty an inventory slot");
+                        return true;
+                    }
+                    else {
+                        p.getInventory().addItem(getMask());
+                        p.sendMessage(ChatColor.YELLOW + "You have received the Anonymous Mask.");
+                        return true;
+                    }
                 }
             }
 
@@ -104,8 +182,12 @@ public class Anonymous extends JavaPlugin implements Listener{
                         Player p = (Player) e.getWhoClicked();
                         team.removeEntry(p.getName());
                         for(int i = 0; i < hiddenPlayers.size(); i++){
-                            if(hiddenPlayers.get(i).getCurrentPlayer() == p){
-                                hiddenPlayers.get(i).getCurrentTeam().addEntry(p.getDisplayName());
+                            //Bukkit.broadcastMessage(hiddenPlayers.get(i).getCurrentPlayer().toString().equals(p.getUniqueId().toString()) ? "MATCHED" : "UNMATCHED");
+                            if(hiddenPlayers.get(i).getCurrentPlayer().toString().equals(p.getUniqueId().toString())){
+                                if(hiddenPlayers.get(i).getCurrentTeam() != null){
+                                    hiddenPlayers.get(i).getCurrentTeam().addEntry(p.getDisplayName());
+                                    //Bukkit.broadcastMessage(p.getDisplayName() + " is JOINING TEAM " + hiddenPlayers.get(i).getCurrentTeam().toString());
+                                }
                                 hiddenPlayers.remove(i);
                                 break;
                             }
@@ -123,6 +205,7 @@ public class Anonymous extends JavaPlugin implements Listener{
         if(e.getPlayer().getInventory().getItemInMainHand().getType().equals(Material.BONE_BLOCK)) {
             if(e.getPlayer().getInventory().getItemInMainHand().getItemMeta().getDisplayName().contains("Anonymous Mask")) {
                 if(e.getPlayer().getInventory().getItemInMainHand().getItemMeta().hasLore()) {
+                    e.setCancelled(true);
                     Player p = (Player) e.getPlayer();
                     if(p.getInventory().getHelmet() != null) {
                         p.sendMessage(ChatColor.DARK_RED + "Please remove your helmet.");
@@ -131,7 +214,7 @@ public class Anonymous extends JavaPlugin implements Listener{
                         p.getInventory().removeItem(getMask());
                         p.getInventory().setHelmet(getMask());
                         //p.sendMessage("" + p.getScoreboard().getEntryTeam(p.getDisplayName()));
-                        hiddenPlayers.add(new SaveTeam(p, p.getScoreboard().getEntryTeam(p.getDisplayName())));
+                        hiddenPlayers.add(new SaveTeam(p.getUniqueId(), p.getScoreboard().getEntryTeam(p.getDisplayName())));
                         team.addEntry(p.getName());
                         p.sendMessage(ChatColor.GREEN + "Your nametag is now invisible.");
                     }

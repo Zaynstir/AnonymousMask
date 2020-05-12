@@ -1,10 +1,11 @@
 package io.github.zaynstir.anonymous;
 
-import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Team;
 
+import java.util.UUID;
+
 public class SaveTeam {
-    private Player player;
+    private UUID player;
     private Team team;
 
     public SaveTeam(){
@@ -12,12 +13,12 @@ public class SaveTeam {
         team = null;
     }
 
-    public SaveTeam(Player player, Team team){
+    public SaveTeam(UUID player, Team team){
         this.player = player;
         this.team = team;
     }
 
-    public Player getCurrentPlayer(){
+    public UUID getCurrentPlayer(){
         return player;
     }
 
@@ -25,7 +26,7 @@ public class SaveTeam {
         return team;
     }
 
-    public void setCurrentPlayer(Player player){
+    public void setCurrentPlayer(UUID player){
         this.player = player;
     }
 
