@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.OfflinePlayer;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -126,18 +127,47 @@ public class Anonymous extends JavaPlugin implements Listener{
             if(p.hasPermission("mask.use")) {
                 if(args.length == 1){
                     if(args[0].equalsIgnoreCase("list")){
-                        String str = "";
-                        p.sendMessage("The Hidden: ");
-                        p.sendMessage("----------------------");
+                        p.sendMessage(ChatColor.DARK_GREEN + "The Hidden: ");
+                        p.sendMessage(ChatColor.DARK_GREEN + "-----------------------------------");
+                        p.sendMessage(ChatColor.DARK_GREEN + "--Real Name | Display Name | Team Name--");
+                        p.sendMessage(ChatColor.DARK_GREEN + "-----------------------------------");
                         for(int i = 0; i < hiddenPlayers.size(); i++){
+                            String str = "";
                             try{
+                                //p.sendMessage((hiddenPlayers.get(i).getCurrentPlayer() == null ? "null" : hiddenPlayers.get(i).getCurrentPlayer().toString()));
+
+                                Player p2 = Bukkit.getPlayer(hiddenPlayers.get(i).getCurrentPlayer());
+                                //p.sendMessage(("" + Bukkit.getPlayer(hiddenPlayers.get(i).getCurrentPlayer())));
+                                str += (p2 == null ? "Unknown Playername" : p2.getName() + " | " + p2.getDisplayName()) + " &2| ";
+
+                            }catch(Exception e){
+                                p.sendMessage("There was an error recieving the list: Player");
+                                getLogger().info("Anonymous Mask Player List Error");
+                            }
+                            try{
+                                //p.sendMessage(hiddenPlayers.get(i).getCurrentTeam())
+                                //p.sendMessage(""+(hiddenPlayers.get(i).getCurrentTeam() == null ? "null" : hiddenPlayers.get(i).getCurrentTeam()));
+                                str += (hiddenPlayers.get(i).getCurrentTeam() == null ? "Unknown Team" : hiddenPlayers.get(i).getCurrentTeam().getName());
+
+                            }catch(Exception e){
+                                p.sendMessage("There was an error recieving the list: Team");
+                                getLogger().info("Anonymous Mask Team List Error");
+                            }
+                            p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&2"+str));
+                            /*try{
                                 p.sendMessage((hiddenPlayers.get(i).getCurrentPlayer() == null ? "null" : hiddenPlayers.get(i).getCurrentPlayer().toString()) + " - " + (hiddenPlayers.get(i).getCurrentTeam().getName() == null ? "null" : hiddenPlayers.get(i).getCurrentTeam().getName()));
                              }catch (Exception e){
                                 p.sendMessage("There was an error recieving the list");
                                 getLogger().info("Anonymous Mask List Error");
-                            }
+                            }*/
                         }
-                        p.sendMessage("----------------------");
+                        p.sendMessage(ChatColor.DARK_GREEN + "-----------------------------------");
+                        return true;
+                    }
+                    if(args[0].equalsIgnoreCase("help")){
+                        p.sendMessage(ChatColor.DARK_GREEN + "---------- Help - Mask ----------");
+                        p.sendMessage(ChatColor.DARK_GREEN + "mask - recieve the Anonymous Mask");
+                        p.sendMessage(ChatColor.DARK_GREEN + "mask list - output's a list of all 'hidden' players and their previous teams.");
                         return true;
                     }
                 }
@@ -182,17 +212,18 @@ public class Anonymous extends JavaPlugin implements Listener{
                         Player p = (Player) e.getWhoClicked();
                         team.removeEntry(p.getName());
                         for(int i = 0; i < hiddenPlayers.size(); i++){
+                            //Bukkit.broadcastMessage(hiddenPlayers.get(i).getCurrentPlayer().toString() +"-"+p.getUniqueId().toString());
                             //Bukkit.broadcastMessage(hiddenPlayers.get(i).getCurrentPlayer().toString().equals(p.getUniqueId().toString()) ? "MATCHED" : "UNMATCHED");
                             if(hiddenPlayers.get(i).getCurrentPlayer().toString().equals(p.getUniqueId().toString())){
                                 if(hiddenPlayers.get(i).getCurrentTeam() != null){
-                                    hiddenPlayers.get(i).getCurrentTeam().addEntry(p.getDisplayName());
-                                    //Bukkit.broadcastMessage(p.getDisplayName() + " is JOINING TEAM " + hiddenPlayers.get(i).getCurrentTeam().toString());
+                                    hiddenPlayers.get(i).getCurrentTeam().addEntry(p.getName());
+                                    //Bukkit.broadcastMessage(p.getName() + " is JOINING TEAM " + hiddenPlayers.get(i).getCurrentTeam().getName());
                                 }
                                 hiddenPlayers.remove(i);
                                 break;
                             }
                         }
-                        p.sendMessage(ChatColor.YELLOW + "Your nametag is now visible.");
+                        p.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + "Your nametag is now visible.");
                     }
                 }
             }
@@ -200,6 +231,7 @@ public class Anonymous extends JavaPlugin implements Listener{
     }
 
 
+    //@EventHandler(priority = EventPriority.HIGH)
     @EventHandler()
     public void onPlayerInteractEvent(PlayerInteractEvent e) {
         if(e.getPlayer().getInventory().getItemInMainHand().getType().equals(Material.BONE_BLOCK)) {
@@ -213,10 +245,14 @@ public class Anonymous extends JavaPlugin implements Listener{
                     else {
                         p.getInventory().removeItem(getMask());
                         p.getInventory().setHelmet(getMask());
-                        //p.sendMessage("" + p.getScoreboard().getEntryTeam(p.getDisplayName()));
-                        hiddenPlayers.add(new SaveTeam(p.getUniqueId(), p.getScoreboard().getEntryTeam(p.getDisplayName())));
-                        team.addEntry(p.getName());
-                        p.sendMessage(ChatColor.GREEN + "Your nametag is now invisible.");
+                        Player p2 = Bukkit.getPlayer(p.getUniqueId());
+                        //p.sendMessage("" + p2.getName() + " | " + p2.getDisplayName());
+                        //p.sendMessage("" + p.getScoreboard().getEntryTeam(p2.getName()));
+                        //p.sendMessage("" + p2.getDisplayName());
+                        //p.sendMessage("" + p2.getName());
+                        hiddenPlayers.add(new SaveTeam(p.getUniqueId(), p.getScoreboard().getEntryTeam(p2.getName())));
+                        team.addEntry(p2.getName());
+                        p.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "Your nametag is now invisible.");
                     }
                 }
             }
